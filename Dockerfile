@@ -1,26 +1,31 @@
-FROM python:3.9-slim
+FROM python:3.11-slim
 
+# Set working directory
 WORKDIR /app
 
-# Copy requirements first for better caching
+# Upgrade pip to avoid compatibility issues
+RUN pip install --upgrade pip
+
+# Copy requirements and install dependencies
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy all application files
+# Copy entire app code
 COPY . .
 
-# Create volume for the database
+# Create volume (if your app uses persistent data)
 VOLUME /app/data
 
-# Expose ports for both applications
+# Expose both Streamlit ports
 EXPOSE 8501 8502
 
-# Create a script to run both applications
+# Create a shell script to run both apps
 RUN echo '#!/bin/bash\n\
 streamlit run auth_app.py --server.port=8501 &\n\
-streamlit run machine_learning.py --server.port=8502\n' > /app/run.sh
+streamlit run machine_learning.py --server.port=8502' > /app/run.sh
 
+# Make the script executable
 RUN chmod +x /app/run.sh
 
-# Run both applications
-CMD ["/app/run.sh"]
+# Set default command to run the shell script
+CMD ["/bin/bash", "/app/run.sh"]
