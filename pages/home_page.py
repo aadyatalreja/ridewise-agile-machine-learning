@@ -92,7 +92,7 @@ def logout():
     for key in list(st.session_state.keys()):
         del st.session_state[key]
     try:
-        st.switch_page("auth_page.py")
+        st.switch_page("Authentication_Page.py")
     except:
         st.rerun()
 
@@ -220,30 +220,30 @@ def main():
     if not verify_session():
         st.warning("You are not logged in. Please log in first.")
         try:
-            st.switch_page("auth_page.py")
+            st.switch_page("Authentication_Page.py")
         except:
             st.error("Could not automatically redirect. Please go back to the authentication page manually.")
             if st.button("Go to Login Page"):
-                st.switch_page("auth_page.py")
+                st.switch_page("Authentication_Page.py")
         return
     page = st.session_state.current_page
     if page == "home":
         display_selection_page()
     elif page == "ml":
         if st.button("Go to ML App"):
-            st.switch_page("pages/app_ml.py")
+            st.switch_page("pages/Machine_Learning.py")
         display_ml_page()
     elif page == "dl":
         if st.button("Go to DL App"):
-            st.switch_page("pages/app_dl.py")
+            st.switch_page("pages/Deep_Learning.py")
         display_dl_page()
     elif page == "qml":
         if st.button("Go to QML App"):
-            st.switch_page("pages/app_qml.py")
+            st.switch_page("pages/Quantum_Machine_Learning.py")
         display_qml_page()
     elif page == "qnn":
         if st.button("Go to QNN App"):
-            st.switch_page("pages/app_qnn.py")
+            st.switch_page("pages/Quantum_Neural_Networks.py")
         display_qnn_page()
 
 if __name__ == "__main__":

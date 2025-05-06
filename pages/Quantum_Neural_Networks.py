@@ -3,30 +3,29 @@ import pandas as pd
 import numpy as np
 import plotly.express as px
 import plotly.graph_objects as go
-from backend_qml import (
+from backend_qnn import (
     loadData, 
     preprocessing, 
-    qnn_classifier, 
-    qsvm_classifier, 
-    qvqc_classifier, 
-    qknn_classifier,
-    qqcl_classifier,
-    compare_qml_models
+    vqc_classifier, 
+    qcnn_classifier, 
+    qfnn_classifier, 
+    compare_all_qnn_models, 
+    showMap, 
+    accept_user_data
 )
 from chatbot_frontend import display_chat_sidebar, display_chat_interface, display_chat_expander, display_chat_tab
 from chatbot_backend import setup_llm_assistant, get_assistant_response
 # Custom CSS Styling - quantum-inspired design
-st.set_page_config(page_title="RideWise: QML Analysis", layout="centered")
+st.set_page_config(page_title="RideWise: QNN Analysis", layout="centered")
 display_chat_interface()
-
-# Apply styling with quantum computing theme
+# Apply styling with quantum-inspired theme
 st.markdown("""
     <style>
     /* Animated gradient for the title - quantum blue/purple theme */
     .gradient-text {
         font-size: 2.5em;
         font-weight: 800;
-        background: linear-gradient(90deg, #3a0ca3 0%, #4361ee 50%, #7209b7 100%);
+        background: linear-gradient(90deg, #3a0ca3 0%, #4361ee 50%, #4cc9f0 100%);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
         animation: gradient-flow 3s infinite alternate;
@@ -50,9 +49,9 @@ st.markdown("""
         color: #4361ee;
     }
 
-    /* Button styling with gradient */
+    /* Button styling with quantum gradient */
     div.stButton > button {
-        background: linear-gradient(to right, #3a0ca3, #7209b7);
+        background: linear-gradient(to right, #3a0ca3, #4361ee);
         color: white;
         font-weight: 600;
         border: none;
@@ -94,45 +93,23 @@ def accept_user_data_input():
     
     try:
         if duration and start_station and end_station:
-            user_prediction_data = np.array([[float(duration), float(start_station), float(end_station)]])
+            user_prediction_data = accept_user_data(float(duration), float(start_station), float(end_station))
             return user_prediction_data
         return None
     except ValueError:
         st.error("Please enter valid numeric values")
         return None
 
-def showMap():
-    try:
-        df = pd.read_csv("2010-capitalbikeshare-tripdata.csv")
-        # This is a placeholder - in a real implementation, you would have latitude and longitude data
-        # For now, we'll create random coordinates centered around Washington DC
-        lat_center, lon_center = 38.9072, -77.0369  # Washington DC coordinates
-        
-        # Create a sample dataframe with fake coordinates
-        plotData = pd.DataFrame({
-            'lat': np.random.normal(lat_center, 0.02, size=100),
-            'lon': np.random.normal(lon_center, 0.02, size=100)
-        })
-        
-        return plotData
-    except Exception as e:
-        print(f"Error loading map data: {e}")
-        # Return some dummy data if the file is not found
-        return pd.DataFrame({
-            'lat': np.random.normal(38.9072, 0.02, size=20),
-            'lon': np.random.normal(-77.0369, 0.02, size=20)
-        })
-
 def compare_models_view(X_train, X_test, y_train, y_test):
-    st.markdown('<div class="gradient-text">Quantum Machine Learning Model Comparison Dashboard</div>', unsafe_allow_html=True)
-    st.write("Comparing the performance of quantum machine learning models for bike trip membership prediction")
+    st.markdown('<div class="gradient-text">Quantum Neural Network Model Comparison Dashboard</div>', unsafe_allow_html=True)
+    st.write("Comparing the performance of quantum neural network models for bike trip membership prediction")
     
     # Create a progress bar to show the model training progress
     progress_bar = st.progress(0)
     
-    with st.spinner("Running quantum model comparison - this may take a few minutes..."):
+    with st.spinner("Running model comparison - this may take a few minutes..."):
         # Get model comparison dataframe
-        df_models = compare_qml_models(X_train, X_test, y_train, y_test)
+        df_models = compare_all_qnn_models(X_train, X_test, y_train, y_test)
         progress_bar.progress(100)
     
     # Display the model comparison table
@@ -146,7 +123,7 @@ def compare_models_view(X_train, X_test, y_train, y_test):
         y='Accuracy (%)',
         color='Accuracy (%)',
         color_continuous_scale='viridis',
-        title='Quantum Machine Learning Model Accuracy Comparison',
+        title='Quantum Model Accuracy Comparison',
         text='Accuracy (%)'
     )
     
@@ -161,15 +138,16 @@ def compare_models_view(X_train, X_test, y_train, y_test):
     
     st.success(f"The best performing quantum model is **{best_model}** with an accuracy of **{best_accuracy:.2f}%**")
     
-    # Add quantum advantages explanation
-    st.subheader("Understanding Quantum Machine Learning Advantages")
+    # Add quantum advantage explanation
+    st.subheader("Understanding Quantum Advantage")
     st.write("""
-    Quantum Machine Learning models offer several potential advantages for complex data analysis:
+    Quantum Neural Networks can offer potential advantages over classical models:
     
-    - **Quantum Superposition**: Can process multiple states simultaneously
-    - **Quantum Entanglement**: Enables novel correlations between quantum bits
-    - **Interference**: Can amplify correct solutions while suppressing wrong ones
-    - **Quantum Kernels**: Can access higher-dimensional feature spaces implicitly
+    - **Quantum Superposition**: QNNs can process multiple states simultaneously
+    - **Quantum Entanglement**: Creates correlations that classical models can't achieve
+    - **Feature Space**: Quantum models can access higher-dimensional feature spaces
+    
+    However, current quantum models are still in their early stages and may not always outperform classical models.
     """)
     
     # Add a button to return to the main page
@@ -189,7 +167,7 @@ def main():
     if st.session_state.page == "compare_models":
         compare_models_view(X_train, X_test, y_train, y_test)
     else:  # Main page
-        st.markdown('<div class="gradient-text">RideWise: Quantum Learning for Bike Trip Classification</div>', unsafe_allow_html=True)
+        st.markdown('<div class="gradient-text">RideWise: Quantum Neural Networks for Bike Trip Classification</div>', unsafe_allow_html=True)
         
         # Show Raw Data section
         if st.checkbox('Show Raw Data'):
@@ -198,32 +176,28 @@ def main():
             st.markdown('<hr>', unsafe_allow_html=True)
         
         # Quantum model selection
-        choose_model = st.sidebar.selectbox("Choose a Quantum Machine Learning Model",
-            ["NONE", "Quantum Neural Network (QNN)", 
-             "Quantum Support Vector Machine (QSVM)", 
-             "Quantum Variational Quantum Classifier (QVQC)",
-             "Quantum K-Nearest Neighbors (QKNN)",
-             "Quantum Quantum Clustering (QQCL)"])
+        choose_model = st.sidebar.selectbox("Choose a Quantum Neural Network",
+            ["NONE", "Variational Quantum Classifier (VQC)", 
+             "Quantum Convolutional Neural Network (QCNN)", 
+             "Quantum Feedforward Neural Network (QFNN)"])
         
         # Add a button for model comparison
         if st.sidebar.button("Compare All Quantum Models"):
             st.session_state.page = "compare_models"
             # st.rerun()
         
-        # About Quantum Machine Learning section
-        with st.sidebar.expander("About Quantum Machine Learning Models"):
+        # About Quantum Computing section
+        with st.sidebar.expander("About Quantum Neural Networks"):
             st.write("""
-            **Quantum Machine Learning Models** leverage quantum computing principles to enhance 
-            classical machine learning tasks. They can potentially offer computational advantages 
-            for certain problems and datasets.
+            **Quantum Neural Networks (QNNs)** combine quantum computing with neural network concepts. 
+            They leverage quantum phenomena like superposition and entanglement to potentially solve 
+            problems that classical neural networks struggle with.
             
-            The models in this app represent different quantum approaches:
+            The three models in this app represent different approaches to quantum machine learning:
             
-            1. **QNN**: Quantum Neural Network with angle embedding and strongly entangling layers
-            2. **QSVM**: Quantum Support Vector Machine using quantum kernels
-            3. **QVQC**: Quantum Variational Quantum Classifier with parameterized circuits
-            4. **QKNN**: Quantum K-Nearest Neighbors with quantum distance metrics
-            5. **QQCL**: Quantum Quantum Clustering for unsupervised learning
+            1. **VQC**: Variational circuits for classification tasks
+            2. **QCNN**: Quantum version of convolutional neural networks
+            3. **QFNN**: Quantum implementation of feedforward architecture
             """)
         
         # Individual model handling
@@ -231,15 +205,15 @@ def main():
             st.subheader(f"{choose_model} Analysis")
             
             with st.spinner(f"Training {choose_model}... This may take a few minutes"):
-                if choose_model == "Quantum Neural Network (QNN)":
-                    score, report, model = qnn_classifier(X_train, X_test, y_train, y_test)
+                if choose_model == "Variational Quantum Classifier (VQC)":
+                    score, report, model = vqc_classifier(X_train, X_test, y_train, y_test)
                     
                     # Create two columns for metrics
                     col1, col2 = st.columns(2)
                     with col1:
                         st.metric("Model Accuracy", f"{score:.2f}%")
                     with col2:
-                        st.metric("Model Type", "QNN")
+                        st.metric("Model Type", "Variational Circuit")
                     
                     # Show classification report
                     with st.expander("Classification Report Details"):
@@ -248,85 +222,47 @@ def main():
                     
                     # Information about model
                     st.info("""
-                    **Quantum Neural Network (QNN)** uses quantum circuits with trainable parameters to perform machine learning tasks.
-                    It embeds classical data using angle embedding and processes it through strongly entangling layers of quantum operations.
-                    The model can potentially capture complex patterns through quantum superposition and entanglement.
+                    **Variational Quantum Classifier (VQC)** uses parameterized quantum circuits to create a 
+                    quantum version of a neural network. This model embeds data into quantum states and applies 
+                    strongly entangling layers to exploit quantum properties for classification.
                     """)
             
-                elif choose_model == "Quantum Support Vector Machine (QSVM)":
-                    score, report, model = qsvm_classifier(X_train, X_test, y_train, y_test)
+                elif choose_model == "Quantum Convolutional Neural Network (QCNN)":
+                    score, report, model = qcnn_classifier(X_train, X_test, y_train, y_test)
                     
                     col1, col2 = st.columns(2)
                     with col1:
                         st.metric("Model Accuracy", f"{score:.2f}%")
                     with col2:
-                        st.metric("Model Type", "QSVM")
+                        st.metric("Model Type", "Quantum CNN")
                     
                     with st.expander("Classification Report Details"):
                         st.text("Classification Report:")
                         st.text(report)
                     
                     st.info("""
-                    **Quantum Support Vector Machine (QSVM)** leverages quantum computing to calculate kernel functions.
-                    It maps classical data to quantum feature space using a quantum feature map with Hadamard gates and entangling operations.
-                    This potentially allows access to higher-dimensional feature spaces that would be intractable classically.
+                    **Quantum Convolutional Neural Network (QCNN)** is the quantum analog of classical CNNs. 
+                    It applies quantum convolutional layers followed by pooling operations, 
+                    reducing the number of active qubits and extracting hierarchical features.
                     """)
             
-                elif choose_model == "Quantum Variational Quantum Classifier (QVQC)":
-                    score, report, model = qvqc_classifier(X_train, X_test, y_train, y_test)
+                elif choose_model == "Quantum Feedforward Neural Network (QFNN)":
+                    score, report, model = qfnn_classifier(X_train, X_test, y_train, y_test)
                     
                     col1, col2 = st.columns(2)
                     with col1:
                         st.metric("Model Accuracy", f"{score:.2f}%")
                     with col2:
-                        st.metric("Model Type", "QVQC")
+                        st.metric("Model Type", "Quantum Feedforward")
                     
                     with st.expander("Classification Report Details"):
                         st.text("Classification Report:")
                         st.text(report)
                     
                     st.info("""
-                    **Quantum Variational Quantum Classifier (QVQC)** uses parameterized quantum circuits as a machine learning model.
-                    It encodes data using rotation gates and applies variational layers with rotation and entangling gates.
-                    Parameters are optimized classically to minimize a cost function computed on the quantum device.
-                    """)
-                    
-                elif choose_model == "Quantum K-Nearest Neighbors (QKNN)":
-                    score, report, model = qknn_classifier(X_train, X_test, y_train, y_test)
-                    
-                    col1, col2 = st.columns(2)
-                    with col1:
-                        st.metric("Model Accuracy", f"{score:.2f}%")
-                    with col2:
-                        st.metric("Model Type", "QKNN")
-                    
-                    with st.expander("Classification Report Details"):
-                        st.text("Classification Report:")
-                        st.text(report)
-                    
-                    st.info("""
-                    **Quantum K-Nearest Neighbors (QKNN)** is a quantum version of the classical KNN algorithm.
-                    It uses quantum computing techniques to measure distance/similarity between data points.
-                    This model can leverage quantum interference to potentially offer speedups in distance calculations.
-                    """)
-                    
-                elif choose_model == "Quantum Quantum Clustering (QQCL)":
-                    score, report, model = qqcl_classifier(X_train, X_test, y_train, y_test)
-                    
-                    col1, col2 = st.columns(2)
-                    with col1:
-                        st.metric("Model Accuracy", f"{score:.2f}%")
-                    with col2:
-                        st.metric("Model Type", "QQCL")
-                    
-                    with st.expander("Classification Report Details"):
-                        st.text("Classification Report:")
-                        st.text(report)
-                    
-                    st.info("""
-                    **Quantum Quantum Clustering (QQCL)** applies quantum principles to clustering tasks.
-                    It uses quantum distance metrics to assign data points to clusters and refine centroids.
-                    The algorithm can potentially identify complex cluster structures through quantum state evolution.
+                    **Quantum Feedforward Neural Network (QFNN)** mimics classical feedforward neural networks 
+                    with input, hidden, and output layers, but uses quantum operations instead of classical 
+                    activation functions. This allows for potentially more complex data transformations.
                     """)
             
                 # User prediction interface
@@ -336,7 +272,12 @@ def main():
                     user_prediction_data = accept_user_data_input()        
                     if user_prediction_data is not None and st.button("Predict with Quantum Model"):
                         with st.spinner("Running quantum prediction..."):
-                            pred = model.predict(user_prediction_data)
+                            if choose_model == "Variational Quantum Classifier (VQC)":
+                                pred = model.predict(user_prediction_data)
+                            elif choose_model == "Quantum Convolutional Neural Network (QCNN)":
+                                pred = model.predict(user_prediction_data)
+                            elif choose_model == "Quantum Feedforward Neural Network (QFNN)":
+                                pred = model.predict(user_prediction_data)
                             
                             # Display prediction with appropriate styling
                             membership_type = le.inverse_transform(pred)[0]
@@ -393,7 +334,7 @@ def main():
             
             You can select different models from the sidebar, compare their performance, and even make predictions with your own input data.
             """)
-    if st.sidebar.button("Back to Main App"):
+    if st.sidebar.button("Back to Home Page"):
         st.switch_page("pages/home_page.py")
 
 if __name__ == "__main__":

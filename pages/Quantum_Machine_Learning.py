@@ -3,30 +3,30 @@ import pandas as pd
 import numpy as np
 import plotly.express as px
 import plotly.graph_objects as go
-from backend_dl import (
+from backend_qml import (
     loadData, 
     preprocessing, 
-    cnn_classifier, 
-    lstm_classifier, 
-    mlp_classifier, 
-    bilstm_classifier,
-    wide_deep_classifier,
-    compare_dl_models
+    qnn_classifier, 
+    qsvm_classifier, 
+    qvqc_classifier, 
+    qknn_classifier,
+    qqcl_classifier,
+    compare_qml_models
 )
 from chatbot_frontend import display_chat_sidebar, display_chat_interface, display_chat_expander, display_chat_tab
 from chatbot_backend import setup_llm_assistant, get_assistant_response
-
-# Custom CSS Styling - deep learning-inspired design
-st.set_page_config(page_title="RideWise: DL Analysis", layout="centered")
+# Custom CSS Styling - quantum-inspired design
+st.set_page_config(page_title="RideWise: QML Analysis", layout="centered")
 display_chat_interface()
-# Apply styling with deep learning theme
+
+# Apply styling with quantum computing theme
 st.markdown("""
     <style>
-    /* Animated gradient for the title - deep learning blue/purple theme */
+    /* Animated gradient for the title - quantum blue/purple theme */
     .gradient-text {
         font-size: 2.5em;
         font-weight: 800;
-        background: linear-gradient(90deg, #3a0ca3 0%, #4361ee 50%, #4cc9f0 100%);
+        background: linear-gradient(90deg, #3a0ca3 0%, #4361ee 50%, #7209b7 100%);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
         animation: gradient-flow 3s infinite alternate;
@@ -44,7 +44,7 @@ st.markdown("""
         border-bottom: 1px solid #f0f0f0;
     }
 
-    /* Override tab underline to deep learning blue */
+    /* Override tab underline to quantum blue */
     div[data-baseweb="tab"] button[aria-selected="true"] {
         border-bottom: 3px solid #4361ee;
         color: #4361ee;
@@ -52,7 +52,7 @@ st.markdown("""
 
     /* Button styling with gradient */
     div.stButton > button {
-        background: linear-gradient(to right, #3a0ca3, #4361ee);
+        background: linear-gradient(to right, #3a0ca3, #7209b7);
         color: white;
         font-weight: 600;
         border: none;
@@ -124,15 +124,15 @@ def showMap():
         })
 
 def compare_models_view(X_train, X_test, y_train, y_test):
-    st.markdown('<div class="gradient-text">Deep Learning Model Comparison Dashboard</div>', unsafe_allow_html=True)
-    st.write("Comparing the performance of deep learning models for bike trip membership prediction")
+    st.markdown('<div class="gradient-text">Quantum Machine Learning Model Comparison Dashboard</div>', unsafe_allow_html=True)
+    st.write("Comparing the performance of quantum machine learning models for bike trip membership prediction")
     
     # Create a progress bar to show the model training progress
     progress_bar = st.progress(0)
     
-    with st.spinner("Running model comparison - this may take a few minutes..."):
+    with st.spinner("Running quantum model comparison - this may take a few minutes..."):
         # Get model comparison dataframe
-        df_models = compare_dl_models(X_train, X_test, y_train, y_test)
+        df_models = compare_qml_models(X_train, X_test, y_train, y_test)
         progress_bar.progress(100)
     
     # Display the model comparison table
@@ -146,7 +146,7 @@ def compare_models_view(X_train, X_test, y_train, y_test):
         y='Accuracy (%)',
         color='Accuracy (%)',
         color_continuous_scale='viridis',
-        title='Deep Learning Model Accuracy Comparison',
+        title='Quantum Machine Learning Model Accuracy Comparison',
         text='Accuracy (%)'
     )
     
@@ -159,23 +159,23 @@ def compare_models_view(X_train, X_test, y_train, y_test):
     best_model = df_models.iloc[0]['Model']
     best_accuracy = df_models.iloc[0]['Accuracy (%)']
     
-    st.success(f"The best performing deep learning model is **{best_model}** with an accuracy of **{best_accuracy:.2f}%**")
+    st.success(f"The best performing quantum model is **{best_model}** with an accuracy of **{best_accuracy:.2f}%**")
     
-    # Add deep learning advantages explanation
-    st.subheader("Understanding Deep Learning Advantages")
+    # Add quantum advantages explanation
+    st.subheader("Understanding Quantum Machine Learning Advantages")
     st.write("""
-    Deep Learning models offer several advantages for complex data analysis:
+    Quantum Machine Learning models offer several potential advantages for complex data analysis:
     
-    - **Feature Learning**: Deep models automatically learn hierarchical features from data
-    - **Flexibility**: Different architectures can handle various data types and patterns
-    - **Non-linearity**: Can model highly complex non-linear relationships
-    - **Scalability**: Performance typically improves with more data and computing resources
+    - **Quantum Superposition**: Can process multiple states simultaneously
+    - **Quantum Entanglement**: Enables novel correlations between quantum bits
+    - **Interference**: Can amplify correct solutions while suppressing wrong ones
+    - **Quantum Kernels**: Can access higher-dimensional feature spaces implicitly
     """)
     
     # Add a button to return to the main page
     if st.button("Return to Main Page"):
         st.session_state.page = "main"
-        #st.rerun()
+        # st.rerun()
 
 def main():
     # Initialize session state for page navigation
@@ -189,7 +189,7 @@ def main():
     if st.session_state.page == "compare_models":
         compare_models_view(X_train, X_test, y_train, y_test)
     else:  # Main page
-        st.markdown('<div class="gradient-text">RideWise: Deep Learning for Bike Trip Classification</div>', unsafe_allow_html=True)
+        st.markdown('<div class="gradient-text">RideWise: Quantum Learning for Bike Trip Classification</div>', unsafe_allow_html=True)
         
         # Show Raw Data section
         if st.checkbox('Show Raw Data'):
@@ -197,32 +197,33 @@ def main():
             st.write(data.head())
             st.markdown('<hr>', unsafe_allow_html=True)
         
-        # Deep Learning model selection
-        choose_model = st.sidebar.selectbox("Choose a Deep Learning Model",
-            ["NONE", "Convolutional Neural Network (CNN)", 
-             "Long Short-Term Memory (LSTM)", 
-             "Multi-Layer Perceptron (MLP)",
-             "Bidirectional LSTM (BiLSTM)",
-             "Wide & Deep"])
+        # Quantum model selection
+        choose_model = st.sidebar.selectbox("Choose a Quantum Machine Learning Model",
+            ["NONE", "Quantum Neural Network (QNN)", 
+             "Quantum Support Vector Machine (QSVM)", 
+             "Quantum Variational Quantum Classifier (QVQC)",
+             "Quantum K-Nearest Neighbors (QKNN)",
+             "Quantum Quantum Clustering (QQCL)"])
         
         # Add a button for model comparison
-        if st.sidebar.button("Compare All Deep Learning Models"):
+        if st.sidebar.button("Compare All Quantum Models"):
             st.session_state.page = "compare_models"
             # st.rerun()
         
-        # About Deep Learning section
-        with st.sidebar.expander("About Deep Learning Models"):
+        # About Quantum Machine Learning section
+        with st.sidebar.expander("About Quantum Machine Learning Models"):
             st.write("""
-            **Deep Learning Models** are advanced neural networks with multiple hidden layers that can learn 
-            complex patterns in data. They excel at feature extraction and can model highly non-linear relationships.
+            **Quantum Machine Learning Models** leverage quantum computing principles to enhance 
+            classical machine learning tasks. They can potentially offer computational advantages 
+            for certain problems and datasets.
             
-            The models in this app represent different deep learning architectures:
+            The models in this app represent different quantum approaches:
             
-            1. **CNN**: Excels at spatial pattern recognition, even in 1D data
-            2. **LSTM**: Specialized for sequential data and temporal dependencies
-            3. **MLP**: Traditional fully-connected neural network architecture
-            4. **BiLSTM**: Bidirectional LSTM that can learn from both past and future context
-            5. **Wide & Deep**: Combines memorization and generalization abilities
+            1. **QNN**: Quantum Neural Network with angle embedding and strongly entangling layers
+            2. **QSVM**: Quantum Support Vector Machine using quantum kernels
+            3. **QVQC**: Quantum Variational Quantum Classifier with parameterized circuits
+            4. **QKNN**: Quantum K-Nearest Neighbors with quantum distance metrics
+            5. **QQCL**: Quantum Quantum Clustering for unsupervised learning
             """)
         
         # Individual model handling
@@ -230,15 +231,15 @@ def main():
             st.subheader(f"{choose_model} Analysis")
             
             with st.spinner(f"Training {choose_model}... This may take a few minutes"):
-                if choose_model == "Convolutional Neural Network (CNN)":
-                    score, report, model = cnn_classifier(X_train, X_test, y_train, y_test)
+                if choose_model == "Quantum Neural Network (QNN)":
+                    score, report, model = qnn_classifier(X_train, X_test, y_train, y_test)
                     
                     # Create two columns for metrics
                     col1, col2 = st.columns(2)
                     with col1:
                         st.metric("Model Accuracy", f"{score:.2f}%")
                     with col2:
-                        st.metric("Model Type", "CNN")
+                        st.metric("Model Type", "QNN")
                     
                     # Show classification report
                     with st.expander("Classification Report Details"):
@@ -247,94 +248,94 @@ def main():
                     
                     # Information about model
                     st.info("""
-                    **Convolutional Neural Network (CNN)** applies convolutional filters to extract local patterns 
-                    in data. While traditionally used for images, CNNs can also detect patterns in tabular or 
-                    temporal data when the features are arranged meaningfully.
+                    **Quantum Neural Network (QNN)** uses quantum circuits with trainable parameters to perform machine learning tasks.
+                    It embeds classical data using angle embedding and processes it through strongly entangling layers of quantum operations.
+                    The model can potentially capture complex patterns through quantum superposition and entanglement.
                     """)
             
-                elif choose_model == "Long Short-Term Memory (LSTM)":
-                    score, report, model = lstm_classifier(X_train, X_test, y_train, y_test)
+                elif choose_model == "Quantum Support Vector Machine (QSVM)":
+                    score, report, model = qsvm_classifier(X_train, X_test, y_train, y_test)
                     
                     col1, col2 = st.columns(2)
                     with col1:
                         st.metric("Model Accuracy", f"{score:.2f}%")
                     with col2:
-                        st.metric("Model Type", "LSTM")
+                        st.metric("Model Type", "QSVM")
                     
                     with st.expander("Classification Report Details"):
                         st.text("Classification Report:")
                         st.text(report)
                     
                     st.info("""
-                    **Long Short-Term Memory (LSTM)** networks are a type of recurrent neural network (RNN) 
-                    specifically designed to handle long-term dependencies. They use memory cells to store, 
-                    forget, and access information over long sequences.
+                    **Quantum Support Vector Machine (QSVM)** leverages quantum computing to calculate kernel functions.
+                    It maps classical data to quantum feature space using a quantum feature map with Hadamard gates and entangling operations.
+                    This potentially allows access to higher-dimensional feature spaces that would be intractable classically.
                     """)
             
-                elif choose_model == "Multi-Layer Perceptron (MLP)":
-                    score, report, model = mlp_classifier(X_train, X_test, y_train, y_test)
+                elif choose_model == "Quantum Variational Quantum Classifier (QVQC)":
+                    score, report, model = qvqc_classifier(X_train, X_test, y_train, y_test)
                     
                     col1, col2 = st.columns(2)
                     with col1:
                         st.metric("Model Accuracy", f"{score:.2f}%")
                     with col2:
-                        st.metric("Model Type", "MLP")
+                        st.metric("Model Type", "QVQC")
                     
                     with st.expander("Classification Report Details"):
                         st.text("Classification Report:")
                         st.text(report)
                     
                     st.info("""
-                    **Multi-Layer Perceptron (MLP)** is a classic feedforward neural network with multiple hidden layers.
-                    It connects each neuron in one layer to every neuron in the next layer, allowing it to learn
-                    complex non-linear relationships between features.
+                    **Quantum Variational Quantum Classifier (QVQC)** uses parameterized quantum circuits as a machine learning model.
+                    It encodes data using rotation gates and applies variational layers with rotation and entangling gates.
+                    Parameters are optimized classically to minimize a cost function computed on the quantum device.
                     """)
                     
-                elif choose_model == "Bidirectional LSTM (BiLSTM)":
-                    score, report, model = bilstm_classifier(X_train, X_test, y_train, y_test)
+                elif choose_model == "Quantum K-Nearest Neighbors (QKNN)":
+                    score, report, model = qknn_classifier(X_train, X_test, y_train, y_test)
                     
                     col1, col2 = st.columns(2)
                     with col1:
                         st.metric("Model Accuracy", f"{score:.2f}%")
                     with col2:
-                        st.metric("Model Type", "BiLSTM")
+                        st.metric("Model Type", "QKNN")
                     
                     with st.expander("Classification Report Details"):
                         st.text("Classification Report:")
                         st.text(report)
                     
                     st.info("""
-                    **Bidirectional LSTM (BiLSTM)** processes data in both forward and backward directions,
-                    allowing the network to learn from both past and future context. This bidirectional approach
-                    often captures more comprehensive patterns in sequential data.
+                    **Quantum K-Nearest Neighbors (QKNN)** is a quantum version of the classical KNN algorithm.
+                    It uses quantum computing techniques to measure distance/similarity between data points.
+                    This model can leverage quantum interference to potentially offer speedups in distance calculations.
                     """)
                     
-                elif choose_model == "Wide & Deep":
-                    score, report, model = wide_deep_classifier(X_train, X_test, y_train, y_test)
+                elif choose_model == "Quantum Quantum Clustering (QQCL)":
+                    score, report, model = qqcl_classifier(X_train, X_test, y_train, y_test)
                     
                     col1, col2 = st.columns(2)
                     with col1:
                         st.metric("Model Accuracy", f"{score:.2f}%")
                     with col2:
-                        st.metric("Model Type", "Wide & Deep")
+                        st.metric("Model Type", "QQCL")
                     
                     with st.expander("Classification Report Details"):
                         st.text("Classification Report:")
                         st.text(report)
                     
                     st.info("""
-                    **Wide & Deep** architecture combines two components: a wide linear model for memorization 
-                    and a deep neural network for generalization. This combination allows it to learn both 
-                    broad patterns and specific feature interactions simultaneously.
+                    **Quantum Quantum Clustering (QQCL)** applies quantum principles to clustering tasks.
+                    It uses quantum distance metrics to assign data points to clusters and refine centroids.
+                    The algorithm can potentially identify complex cluster structures through quantum state evolution.
                     """)
             
                 # User prediction interface
                 st.subheader("Try a Prediction")
                 try:
-                    st.info("Enter values to predict membership type using the trained deep learning model")
+                    st.info("Enter values to predict membership type using the trained quantum model")
                     user_prediction_data = accept_user_data_input()        
-                    if user_prediction_data is not None and st.button("Predict with Deep Learning Model"):
-                        with st.spinner("Running prediction..."):
+                    if user_prediction_data is not None and st.button("Predict with Quantum Model"):
+                        with st.spinner("Running quantum prediction..."):
                             pred = model.predict(user_prediction_data)
                             
                             # Display prediction with appropriate styling
@@ -392,7 +393,7 @@ def main():
             
             You can select different models from the sidebar, compare their performance, and even make predictions with your own input data.
             """)
-    if st.sidebar.button("Back to Main App"):
+    if st.sidebar.button("Back to Home Page"):
         st.switch_page("pages/home_page.py")
 
 if __name__ == "__main__":
