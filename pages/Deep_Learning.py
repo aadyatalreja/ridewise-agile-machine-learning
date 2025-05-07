@@ -379,8 +379,7 @@ def main():
             You can select different models from the sidebar, compare their performance, and even make predictions with your own input data.
             """)
     if st.sidebar.button("Back to Home Page"):
-        st.switch_page("pages/home_page.py")
-        
+        st.switch_page("pages/home_page.py")   
 
 if __name__ == "__main__":
     main()

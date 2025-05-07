@@ -5,7 +5,7 @@ import plotly.express as px
 import plotly.graph_objects as go
 import sys
 import os
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+#sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from backend_qml import (
     loadData, 
     preprocessing, 
@@ -384,5 +384,5 @@ def main():
     if st.sidebar.button("Back to Home Page"):
         st.switch_page("pages/home_page.py")
 
-if __name__ == "_-main__":
+if __name__ == "__main__":
     main()
