@@ -15,9 +15,9 @@ from backend_dl import (
 )
 from chatbot_frontend import display_chat_sidebar, display_chat_interface, display_chat_expander, display_chat_tab
 from chatbot_backend import setup_llm_assistant, get_assistant_response
-
 # Custom CSS Styling - deep learning-inspired design
 st.set_page_config(page_title="RideWise: DL Analysis", layout="centered")
+# Display the chat interface in the sidebar for all pages
 display_chat_interface()
 # Apply styling with deep learning theme
 st.markdown("""
@@ -130,10 +130,18 @@ def compare_models_view(X_train, X_test, y_train, y_test):
     # Create a progress bar to show the model training progress
     progress_bar = st.progress(0)
     
-    with st.spinner("Running model comparison - this may take a few minutes..."):
-        # Get model comparison dataframe
-        df_models = compare_dl_models(X_train, X_test, y_train, y_test)
+    # Only run model comparison if results aren't already in session state
+    if 'model_comparison_results' not in st.session_state:
+        with st.spinner("Running model comparison - this may take a few minutes..."):
+            # Get model comparison dataframe
+            st.session_state.model_comparison_results = compare_dl_models(X_train, X_test, y_train, y_test)
+            progress_bar.progress(100)
+    else:
+        # If results already exist, just show completed progress bar
         progress_bar.progress(100)
+    
+    # Get results from session state
+    df_models = st.session_state.model_comparison_results
     
     # Display the model comparison table
     st.subheader("Model Accuracy Comparison")
@@ -155,27 +163,31 @@ def compare_models_view(X_train, X_test, y_train, y_test):
     
     st.plotly_chart(fig, use_container_width=True)
     
-    # Identify the best performing model
-    best_model = df_models.iloc[0]['Model']
-    best_accuracy = df_models.iloc[0]['Accuracy (%)']
+    # Identify the best performing model(s)
+    best_accuracy = df_models['Accuracy (%)'].max()
+    best_models = df_models[df_models['Accuracy (%)'] == best_accuracy]['Model'].tolist()
     
-    st.success(f"The best performing deep learning model is **{best_model}** with an accuracy of **{best_accuracy:.2f}%**")
+    if len(best_models) == 1:
+        st.success(f"The best performing deep learning model is *{best_models[0]}* with an accuracy of *{best_accuracy:.2f}%*")
+    else:
+        best_models_str = ", ".join([f"{model}" for model in best_models])
+        st.success(f"The best performing deep learning models are {best_models_str}, all with an accuracy of *{best_accuracy:.2f}%*")
     
     # Add deep learning advantages explanation
     st.subheader("Understanding Deep Learning Advantages")
     st.write("""
     Deep Learning models offer several advantages for complex data analysis:
     
-    - **Feature Learning**: Deep models automatically learn hierarchical features from data
-    - **Flexibility**: Different architectures can handle various data types and patterns
-    - **Non-linearity**: Can model highly complex non-linear relationships
-    - **Scalability**: Performance typically improves with more data and computing resources
+    - *Feature Learning*: Deep models automatically learn hierarchical features from data
+    - *Flexibility*: Different architectures can handle various data types and patterns
+    - *Non-linearity*: Can model highly complex non-linear relationships
+    - *Scalability*: Performance typically improves with more data and computing resources
     """)
     
-    # Add a button to return to the main page
+    # Fix: Return to Main Page button - now simply changes the session state without rerunning
     if st.button("Return to Main Page"):
         st.session_state.page = "main"
-        #st.rerun()
+        st.rerun()  # Use st.rerun() for newer Streamlit versions
 
 def main():
     # Initialize session state for page navigation
@@ -208,144 +220,117 @@ def main():
         # Add a button for model comparison
         if st.sidebar.button("Compare All Deep Learning Models"):
             st.session_state.page = "compare_models"
-            # st.rerun()
+            st.rerun()  # Use st.rerun() for newer Streamlit versions
         
         # About Deep Learning section
         with st.sidebar.expander("About Deep Learning Models"):
             st.write("""
-            **Deep Learning Models** are advanced neural networks with multiple hidden layers that can learn 
+            *Deep Learning Models* are advanced neural networks with multiple hidden layers that can learn 
             complex patterns in data. They excel at feature extraction and can model highly non-linear relationships.
             
             The models in this app represent different deep learning architectures:
             
-            1. **CNN**: Excels at spatial pattern recognition, even in 1D data
-            2. **LSTM**: Specialized for sequential data and temporal dependencies
-            3. **MLP**: Traditional fully-connected neural network architecture
-            4. **BiLSTM**: Bidirectional LSTM that can learn from both past and future context
-            5. **Wide & Deep**: Combines memorization and generalization abilities
+            1. *CNN*: Excels at spatial pattern recognition, even in 1D data
+            2. *LSTM*: Specialized for sequential data and temporal dependencies
+            3. *MLP*: Traditional fully-connected neural network architecture
+            4. *BiLSTM*: Bidirectional LSTM that can learn from both past and future context
+            5. *Wide & Deep*: Combines memorization and generalization abilities
             """)
         
         # Individual model handling
         if choose_model != "NONE":
             st.subheader(f"{choose_model} Analysis")
             
-            with st.spinner(f"Training {choose_model}... This may take a few minutes"):
-                if choose_model == "Convolutional Neural Network (CNN)":
-                    score, report, model = cnn_classifier(X_train, X_test, y_train, y_test)
-                    
-                    # Create two columns for metrics
-                    col1, col2 = st.columns(2)
-                    with col1:
-                        st.metric("Model Accuracy", f"{score:.2f}%")
-                    with col2:
-                        st.metric("Model Type", "CNN")
-                    
-                    # Show classification report
-                    with st.expander("Classification Report Details"):
-                        st.text("Classification Report:")
-                        st.text(report)
-                    
-                    # Information about model
-                    st.info("""
-                    **Convolutional Neural Network (CNN)** applies convolutional filters to extract local patterns 
-                    in data. While traditionally used for images, CNNs can also detect patterns in tabular or 
-                    temporal data when the features are arranged meaningfully.
-                    """)
+            # Use session state to store model results to avoid retraining
+            model_key = choose_model.replace(" ", "_").lower()
             
-                elif choose_model == "Long Short-Term Memory (LSTM)":
-                    score, report, model = lstm_classifier(X_train, X_test, y_train, y_test)
+            if model_key not in st.session_state:
+                with st.spinner(f"Training {choose_model}... This may take a few minutes"):
+                    if choose_model == "Convolutional Neural Network (CNN)":
+                        score, report, model = cnn_classifier(X_train, X_test, y_train, y_test)
+                    elif choose_model == "Long Short-Term Memory (LSTM)":
+                        score, report, model = lstm_classifier(X_train, X_test, y_train, y_test)
+                    elif choose_model == "Multi-Layer Perceptron (MLP)":
+                        score, report, model = mlp_classifier(X_train, X_test, y_train, y_test)
+                    elif choose_model == "Bidirectional LSTM (BiLSTM)":
+                        score, report, model = bilstm_classifier(X_train, X_test, y_train, y_test)
+                    elif choose_model == "Wide & Deep":
+                        score, report, model = wide_deep_classifier(X_train, X_test, y_train, y_test)
                     
-                    col1, col2 = st.columns(2)
-                    with col1:
-                        st.metric("Model Accuracy", f"{score:.2f}%")
-                    with col2:
-                        st.metric("Model Type", "LSTM")
-                    
-                    with st.expander("Classification Report Details"):
-                        st.text("Classification Report:")
-                        st.text(report)
-                    
-                    st.info("""
-                    **Long Short-Term Memory (LSTM)** networks are a type of recurrent neural network (RNN) 
-                    specifically designed to handle long-term dependencies. They use memory cells to store, 
-                    forget, and access information over long sequences.
-                    """)
+                    # Store results in session state
+                    st.session_state[model_key] = {
+                        'score': score,
+                        'report': report,
+                        'model': model
+                    }
             
-                elif choose_model == "Multi-Layer Perceptron (MLP)":
-                    score, report, model = mlp_classifier(X_train, X_test, y_train, y_test)
-                    
-                    col1, col2 = st.columns(2)
-                    with col1:
-                        st.metric("Model Accuracy", f"{score:.2f}%")
-                    with col2:
-                        st.metric("Model Type", "MLP")
-                    
-                    with st.expander("Classification Report Details"):
-                        st.text("Classification Report:")
-                        st.text(report)
-                    
-                    st.info("""
-                    **Multi-Layer Perceptron (MLP)** is a classic feedforward neural network with multiple hidden layers.
-                    It connects each neuron in one layer to every neuron in the next layer, allowing it to learn
-                    complex non-linear relationships between features.
-                    """)
-                    
-                elif choose_model == "Bidirectional LSTM (BiLSTM)":
-                    score, report, model = bilstm_classifier(X_train, X_test, y_train, y_test)
-                    
-                    col1, col2 = st.columns(2)
-                    with col1:
-                        st.metric("Model Accuracy", f"{score:.2f}%")
-                    with col2:
-                        st.metric("Model Type", "BiLSTM")
-                    
-                    with st.expander("Classification Report Details"):
-                        st.text("Classification Report:")
-                        st.text(report)
-                    
-                    st.info("""
-                    **Bidirectional LSTM (BiLSTM)** processes data in both forward and backward directions,
-                    allowing the network to learn from both past and future context. This bidirectional approach
-                    often captures more comprehensive patterns in sequential data.
-                    """)
-                    
-                elif choose_model == "Wide & Deep":
-                    score, report, model = wide_deep_classifier(X_train, X_test, y_train, y_test)
-                    
-                    col1, col2 = st.columns(2)
-                    with col1:
-                        st.metric("Model Accuracy", f"{score:.2f}%")
-                    with col2:
-                        st.metric("Model Type", "Wide & Deep")
-                    
-                    with st.expander("Classification Report Details"):
-                        st.text("Classification Report:")
-                        st.text(report)
-                    
-                    st.info("""
-                    **Wide & Deep** architecture combines two components: a wide linear model for memorization 
-                    and a deep neural network for generalization. This combination allows it to learn both 
-                    broad patterns and specific feature interactions simultaneously.
-                    """)
+            # Retrieve model results from session state
+            score = st.session_state[model_key]['score']
+            report = st.session_state[model_key]['report']
+            model = st.session_state[model_key]['model']
             
-                # User prediction interface
-                st.subheader("Try a Prediction")
-                try:
-                    st.info("Enter values to predict membership type using the trained deep learning model")
-                    user_prediction_data = accept_user_data_input()        
-                    if user_prediction_data is not None and st.button("Predict with Deep Learning Model"):
-                        with st.spinner("Running prediction..."):
-                            pred = model.predict(user_prediction_data)
-                            
-                            # Display prediction with appropriate styling
-                            membership_type = le.inverse_transform(pred)[0]
-                            if membership_type == "Member":
-                                st.success(f"Predicted Membership Type: {membership_type}")
-                            else:
-                                st.warning(f"Predicted Membership Type: {membership_type}")
-                except Exception as e:
-                    st.error(f"Error during prediction: {e}")
+            # Create two columns for metrics
+            col1, col2 = st.columns(2)
+            with col1:
+                st.metric("Model Accuracy", f"{score:.2f}%")
+            with col2:
+                st.metric("Model Type", choose_model.split(" (")[0])
             
+            # Show classification report
+            with st.expander("Classification Report Details"):
+                st.text("Classification Report:")
+                st.text(report)
+            
+            # Information about the model based on model type
+            if choose_model == "Convolutional Neural Network (CNN)":
+                st.info("""
+                *Convolutional Neural Network (CNN)* applies convolutional filters to extract local patterns 
+                in data. While traditionally used for images, CNNs can also detect patterns in tabular or 
+                temporal data when the features are arranged meaningfully.
+                """)
+            elif choose_model == "Long Short-Term Memory (LSTM)":
+                st.info("""
+                *Long Short-Term Memory (LSTM)* networks are a type of recurrent neural network (RNN) 
+                specifically designed to handle long-term dependencies. They use memory cells to store, 
+                forget, and access information over long sequences.
+                """)
+            elif choose_model == "Multi-Layer Perceptron (MLP)":
+                st.info("""
+                *Multi-Layer Perceptron (MLP)* is a classic feedforward neural network with multiple hidden layers.
+                It connects each neuron in one layer to every neuron in the next layer, allowing it to learn
+                complex non-linear relationships between features.
+                """)
+            elif choose_model == "Bidirectional LSTM (BiLSTM)":
+                st.info("""
+                *Bidirectional LSTM (BiLSTM)* processes data in both forward and backward directions,
+                allowing the network to learn from both past and future context. This bidirectional approach
+                often captures more comprehensive patterns in sequential data.
+                """)
+            elif choose_model == "Wide & Deep":
+                st.info("""
+                *Wide & Deep* architecture combines two components: a wide linear model for memorization 
+                and a deep neural network for generalization. This combination allows it to learn both 
+                broad patterns and specific feature interactions simultaneously.
+                """)
+            
+            # User prediction interface
+            st.subheader("Try a Prediction")
+            try:
+                st.info("Enter values to predict membership type using the trained deep learning model")
+                user_prediction_data = accept_user_data_input()        
+                if user_prediction_data is not None and st.button("Predict with Deep Learning Model"):
+                    with st.spinner("Running prediction..."):
+                        pred = model.predict(user_prediction_data)
+                        
+                        # Display prediction with appropriate styling
+                        membership_type = le.inverse_transform(pred)[0]
+                        if membership_type == "Member":
+                            st.success(f"Predicted Membership Type: {membership_type}")
+                        else:
+                            st.warning(f"Predicted Membership Type: {membership_type}")
+            except Exception as e:
+                st.error(f"Error during prediction: {e}")
+        
             # Add a separator
             st.markdown('<hr>', unsafe_allow_html=True)
         
@@ -377,6 +362,7 @@ def main():
             
     # Add back button
     st.sidebar.markdown("---")
+    # Display a summary of the application in the main page
     with st.sidebar.expander("About RideWise"):
             st.markdown("""
             **RideWise** is a machine learning application that analyzes bike sharing system data to predict membership types.
@@ -394,6 +380,7 @@ def main():
             """)
     if st.sidebar.button("Back to Home Page"):
         st.switch_page("pages/home_page.py")
+        
 
 if __name__ == "__main__":
     main()

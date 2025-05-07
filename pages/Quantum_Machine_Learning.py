@@ -3,6 +3,9 @@ import pandas as pd
 import numpy as np
 import plotly.express as px
 import plotly.graph_objects as go
+import sys
+import os
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from backend_qml import (
     loadData, 
     preprocessing, 
@@ -127,13 +130,21 @@ def compare_models_view(X_train, X_test, y_train, y_test):
     st.markdown('<div class="gradient-text">Quantum Machine Learning Model Comparison Dashboard</div>', unsafe_allow_html=True)
     st.write("Comparing the performance of quantum machine learning models for bike trip membership prediction")
     
-    # Create a progress bar to show the model training progress
-    progress_bar = st.progress(0)
-    
-    with st.spinner("Running quantum model comparison - this may take a few minutes..."):
-        # Get model comparison dataframe
-        df_models = compare_qml_models(X_train, X_test, y_train, y_test)
-        progress_bar.progress(100)
+    # Only run the comparison if results don't already exist in session state
+    if 'model_comparison_results' not in st.session_state:
+        # Create a progress bar to show the model training progress
+        progress_bar = st.progress(0)
+        
+        with st.spinner("Running quantum model comparison - this may take a few minutes..."):
+            # Get model comparison dataframe
+            df_models = compare_qml_models(X_train, X_test, y_train, y_test)
+            progress_bar.progress(100)
+            
+            # Store results in session state to avoid recomputing
+            st.session_state.model_comparison_results = df_models
+    else:
+        # Use cached results
+        df_models = st.session_state.model_comparison_results
     
     # Display the model comparison table
     st.subheader("Model Accuracy Comparison")
@@ -159,28 +170,32 @@ def compare_models_view(X_train, X_test, y_train, y_test):
     best_model = df_models.iloc[0]['Model']
     best_accuracy = df_models.iloc[0]['Accuracy (%)']
     
-    st.success(f"The best performing quantum model is **{best_model}** with an accuracy of **{best_accuracy:.2f}%**")
+    st.success(f"The best performing quantum model is *{best_model}* with an accuracy of *{best_accuracy:.2f}%*")
     
     # Add quantum advantages explanation
     st.subheader("Understanding Quantum Machine Learning Advantages")
     st.write("""
     Quantum Machine Learning models offer several potential advantages for complex data analysis:
     
-    - **Quantum Superposition**: Can process multiple states simultaneously
-    - **Quantum Entanglement**: Enables novel correlations between quantum bits
-    - **Interference**: Can amplify correct solutions while suppressing wrong ones
-    - **Quantum Kernels**: Can access higher-dimensional feature spaces implicitly
+    - *Quantum Superposition*: Can process multiple states simultaneously
+    - *Quantum Entanglement*: Enables novel correlations between quantum bits
+    - *Interference*: Can amplify correct solutions while suppressing wrong ones
+    - *Quantum Kernels*: Can access higher-dimensional feature spaces implicitly
     """)
     
     # Add a button to return to the main page
     if st.button("Return to Main Page"):
         st.session_state.page = "main"
-        # st.rerun()
+        st.rerun()
 
 def main():
-    # Initialize session state for page navigation
+    # Initialize session state for page navigation and model caching
     if 'page' not in st.session_state:
         st.session_state.page = "main"
+    
+    # Initialize model cache in session state
+    if 'model_cache' not in st.session_state:
+        st.session_state.model_cache = {}
         
     # Load data and preprocessing (common for all pages)
     data, X_train, X_test, y_train, y_test, le = load_and_preprocess_data()
@@ -208,144 +223,117 @@ def main():
         # Add a button for model comparison
         if st.sidebar.button("Compare All Quantum Models"):
             st.session_state.page = "compare_models"
-            # st.rerun()
+            st.rerun()
         
         # About Quantum Machine Learning section
         with st.sidebar.expander("About Quantum Machine Learning Models"):
             st.write("""
-            **Quantum Machine Learning Models** leverage quantum computing principles to enhance 
+            *Quantum Machine Learning Models* leverage quantum computing principles to enhance 
             classical machine learning tasks. They can potentially offer computational advantages 
             for certain problems and datasets.
             
             The models in this app represent different quantum approaches:
             
-            1. **QNN**: Quantum Neural Network with angle embedding and strongly entangling layers
-            2. **QSVM**: Quantum Support Vector Machine using quantum kernels
-            3. **QVQC**: Quantum Variational Quantum Classifier with parameterized circuits
-            4. **QKNN**: Quantum K-Nearest Neighbors with quantum distance metrics
-            5. **QQCL**: Quantum Quantum Clustering for unsupervised learning
+            1. *QNN*: Quantum Neural Network with angle embedding and strongly entangling layers
+            2. *QSVM*: Quantum Support Vector Machine using quantum kernels
+            3. *QVQC*: Quantum Variational Quantum Classifier with parameterized circuits
+            4. *QKNN*: Quantum K-Nearest Neighbors with quantum distance metrics
+            5. *QQCL*: Quantum Quantum Clustering for unsupervised learning
             """)
         
         # Individual model handling
         if choose_model != "NONE":
             st.subheader(f"{choose_model} Analysis")
             
-            with st.spinner(f"Training {choose_model}... This may take a few minutes"):
-                if choose_model == "Quantum Neural Network (QNN)":
-                    score, report, model = qnn_classifier(X_train, X_test, y_train, y_test)
-                    
-                    # Create two columns for metrics
-                    col1, col2 = st.columns(2)
-                    with col1:
-                        st.metric("Model Accuracy", f"{score:.2f}%")
-                    with col2:
-                        st.metric("Model Type", "QNN")
-                    
-                    # Show classification report
-                    with st.expander("Classification Report Details"):
-                        st.text("Classification Report:")
-                        st.text(report)
-                    
-                    # Information about model
-                    st.info("""
-                    **Quantum Neural Network (QNN)** uses quantum circuits with trainable parameters to perform machine learning tasks.
-                    It embeds classical data using angle embedding and processes it through strongly entangling layers of quantum operations.
-                    The model can potentially capture complex patterns through quantum superposition and entanglement.
-                    """)
+            # Check if we've already trained this model and have it cached
+            if choose_model in st.session_state.model_cache:
+                # Use cached model results
+                score = st.session_state.model_cache[choose_model]['score']
+                report = st.session_state.model_cache[choose_model]['report']
+                model = st.session_state.model_cache[choose_model]['model']
+            else:
+                # Train model and cache results
+                with st.spinner(f"Training {choose_model}... This may take a few minutes"):
+                    if choose_model == "Quantum Neural Network (QNN)":
+                        score, report, model = qnn_classifier(X_train, X_test, y_train, y_test)
+                    elif choose_model == "Quantum Support Vector Machine (QSVM)":
+                        score, report, model = qsvm_classifier(X_train, X_test, y_train, y_test)
+                    elif choose_model == "Quantum Variational Quantum Classifier (QVQC)":
+                        score, report, model = qvqc_classifier(X_train, X_test, y_train, y_test)
+                    elif choose_model == "Quantum K-Nearest Neighbors (QKNN)":
+                        score, report, model = qknn_classifier(X_train, X_test, y_train, y_test)
+                    elif choose_model == "Quantum Quantum Clustering (QQCL)":
+                        score, report, model = qqcl_classifier(X_train, X_test, y_train, y_test)
+                
+                # Store in cache
+                st.session_state.model_cache[choose_model] = {
+                    'score': score,
+                    'report': report,
+                    'model': model
+                }
             
-                elif choose_model == "Quantum Support Vector Machine (QSVM)":
-                    score, report, model = qsvm_classifier(X_train, X_test, y_train, y_test)
-                    
-                    col1, col2 = st.columns(2)
-                    with col1:
-                        st.metric("Model Accuracy", f"{score:.2f}%")
-                    with col2:
-                        st.metric("Model Type", "QSVM")
-                    
-                    with st.expander("Classification Report Details"):
-                        st.text("Classification Report:")
-                        st.text(report)
-                    
-                    st.info("""
-                    **Quantum Support Vector Machine (QSVM)** leverages quantum computing to calculate kernel functions.
-                    It maps classical data to quantum feature space using a quantum feature map with Hadamard gates and entangling operations.
-                    This potentially allows access to higher-dimensional feature spaces that would be intractable classically.
-                    """)
+            # Display model metrics and information (always shown whether cached or not)
+            # Create two columns for metrics
+            col1, col2 = st.columns(2)
+            with col1:
+                st.metric("Model Accuracy", f"{score:.2f}%")
+            with col2:
+                st.metric("Model Type", choose_model.split(' ')[1].strip('()'))
             
-                elif choose_model == "Quantum Variational Quantum Classifier (QVQC)":
-                    score, report, model = qvqc_classifier(X_train, X_test, y_train, y_test)
-                    
-                    col1, col2 = st.columns(2)
-                    with col1:
-                        st.metric("Model Accuracy", f"{score:.2f}%")
-                    with col2:
-                        st.metric("Model Type", "QVQC")
-                    
-                    with st.expander("Classification Report Details"):
-                        st.text("Classification Report:")
-                        st.text(report)
-                    
-                    st.info("""
-                    **Quantum Variational Quantum Classifier (QVQC)** uses parameterized quantum circuits as a machine learning model.
-                    It encodes data using rotation gates and applies variational layers with rotation and entangling gates.
-                    Parameters are optimized classically to minimize a cost function computed on the quantum device.
-                    """)
-                    
-                elif choose_model == "Quantum K-Nearest Neighbors (QKNN)":
-                    score, report, model = qknn_classifier(X_train, X_test, y_train, y_test)
-                    
-                    col1, col2 = st.columns(2)
-                    with col1:
-                        st.metric("Model Accuracy", f"{score:.2f}%")
-                    with col2:
-                        st.metric("Model Type", "QKNN")
-                    
-                    with st.expander("Classification Report Details"):
-                        st.text("Classification Report:")
-                        st.text(report)
-                    
-                    st.info("""
-                    **Quantum K-Nearest Neighbors (QKNN)** is a quantum version of the classical KNN algorithm.
-                    It uses quantum computing techniques to measure distance/similarity between data points.
-                    This model can leverage quantum interference to potentially offer speedups in distance calculations.
-                    """)
-                    
-                elif choose_model == "Quantum Quantum Clustering (QQCL)":
-                    score, report, model = qqcl_classifier(X_train, X_test, y_train, y_test)
-                    
-                    col1, col2 = st.columns(2)
-                    with col1:
-                        st.metric("Model Accuracy", f"{score:.2f}%")
-                    with col2:
-                        st.metric("Model Type", "QQCL")
-                    
-                    with st.expander("Classification Report Details"):
-                        st.text("Classification Report:")
-                        st.text(report)
-                    
-                    st.info("""
-                    **Quantum Quantum Clustering (QQCL)** applies quantum principles to clustering tasks.
-                    It uses quantum distance metrics to assign data points to clusters and refine centroids.
-                    The algorithm can potentially identify complex cluster structures through quantum state evolution.
-                    """)
+            # Show classification report
+            with st.expander("Classification Report Details"):
+                st.text("Classification Report:")
+                st.text(report)
             
-                # User prediction interface
-                st.subheader("Try a Prediction")
-                try:
-                    st.info("Enter values to predict membership type using the trained quantum model")
-                    user_prediction_data = accept_user_data_input()        
-                    if user_prediction_data is not None and st.button("Predict with Quantum Model"):
-                        with st.spinner("Running quantum prediction..."):
-                            pred = model.predict(user_prediction_data)
-                            
-                            # Display prediction with appropriate styling
-                            membership_type = le.inverse_transform(pred)[0]
-                            if membership_type == "Member":
-                                st.success(f"Predicted Membership Type: {membership_type}")
-                            else:
-                                st.warning(f"Predicted Membership Type: {membership_type}")
-                except Exception as e:
-                    st.error(f"Error during prediction: {e}")
+            # Information about model
+            if choose_model == "Quantum Neural Network (QNN)":
+                st.info("""
+                *Quantum Neural Network (QNN)* uses quantum circuits with trainable parameters to perform machine learning tasks.
+                It embeds classical data using angle embedding and processes it through strongly entangling layers of quantum operations.
+                The model can potentially capture complex patterns through quantum superposition and entanglement.
+                """)
+            elif choose_model == "Quantum Support Vector Machine (QSVM)":
+                st.info("""
+                *Quantum Support Vector Machine (QSVM)* leverages quantum computing to calculate kernel functions.
+                It maps classical data to quantum feature space using a quantum feature map with Hadamard gates and entangling operations.
+                This potentially allows access to higher-dimensional feature spaces that would be intractable classically.
+                """)
+            elif choose_model == "Quantum Variational Quantum Classifier (QVQC)":
+                st.info("""
+                *Quantum Variational Quantum Classifier (QVQC)* uses parameterized quantum circuits as a machine learning model.
+                It encodes data using rotation gates and applies variational layers with rotation and entangling gates.
+                Parameters are optimized classically to minimize a cost function computed on the quantum device.
+                """)
+            elif choose_model == "Quantum K-Nearest Neighbors (QKNN)":
+                st.info("""
+                *Quantum K-Nearest Neighbors (QKNN)* is a quantum version of the classical KNN algorithm.
+                It uses quantum computing techniques to measure distance/similarity between data points.
+                This model can leverage quantum interference to potentially offer speedups in distance calculations.
+                """)
+            elif choose_model == "Quantum Quantum Clustering (QQCL)":
+                st.info("""
+                *Quantum Quantum Clustering (QQCL)* applies quantum principles to clustering tasks.
+                It uses quantum distance metrics to assign data points to clusters and refine centroids.
+                The algorithm can potentially identify complex cluster structures through quantum state evolution.
+                """)
+            
+            # User prediction interface
+            st.subheader("Try a Prediction")
+            try:
+                st.info("Enter values to predict membership type using the trained quantum model")
+                user_prediction_data = accept_user_data_input()        
+                if user_prediction_data is not None and st.button("Predict with Quantum Model"):
+                    with st.spinner("Running quantum prediction..."):
+                        pred = model.predict(user_prediction_data)
+                        
+                        # Display prediction with appropriate styling
+                        membership_type = le.inverse_transform(pred)[0]
+                        if membership_type == "Member":
+                            st.success(f"Predicted Membership Type: {membership_type}")
+                        else:
+                            st.warning(f"Predicted Membership Type: {membership_type}")
+            except Exception as e:
+                st.error(f"Error during prediction: {e}")
             
             # Add a separator
             st.markdown('<hr>', unsafe_allow_html=True)
@@ -380,7 +368,7 @@ def main():
     st.sidebar.markdown("---")
     with st.sidebar.expander("About RideWise"):
             st.markdown("""
-            **RideWise** is a machine learning application that analyzes bike sharing system data to predict membership types.
+            *RideWise* is a machine learning application that analyzes bike sharing system data to predict membership types.
             
             The application uses various machine learning models to classify trips as either:
             - Registered members
@@ -396,5 +384,5 @@ def main():
     if st.sidebar.button("Back to Home Page"):
         st.switch_page("pages/home_page.py")
 
-if __name__ == "__main__":
+if __name__ == "_-main__":
     main()

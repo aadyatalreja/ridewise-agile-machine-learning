@@ -32,7 +32,7 @@ st.markdown("""
     .gradient-text {
         font-size: 2.5em;
         font-weight: 800;
-        background: linear-gradient(90deg, #6a11cb 0%, #2575fc 100%);
+        background: linear-gradient(90deg, #3a0ca3 0%, #4361ee 50%, #7209b7 100%);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
         animation: gradient-flow 3s infinite alternate;
@@ -58,7 +58,7 @@ st.markdown("""
 
     /* Button styling */
     div.stButton > button {
-        background: linear-gradient(to right, #6a11cb, #2575fc);
+        background: linear-gradient(to right, #3a0ca3, #4361ee);
         color: white;
         font-weight: 600;
         border: none;
@@ -70,32 +70,6 @@ st.markdown("""
     /* Remove unwanted top empty box */
     section[data-testid="stTabs"] > div:first-child {
         display: none !important;
-    }
-    
-    /* User message style */
-    .user-message {
-        background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
-        color: white;
-        border-radius: 18px 18px 4px 18px;
-        padding: 0.8rem 1rem;
-        margin: 0.25rem 0;
-        max-width: 80%;
-        margin-left: auto;
-        word-wrap: break-word;
-        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-        animation: fadeIn 0.3s ease-out;
-    }
-    
-    /* Bot message style */
-    .bot-message {
-        background: #e9e9e9;
-        color: #333;
-        border-radius: 18px 18px 18px 0;
-        padding: 0.8rem 1rem;
-        margin: 0.5rem 0;
-        max-width: 80%;
-        margin-right: auto;
-        word-wrap: break-word;
     }
     
     /* Message fade-in animation */
@@ -386,10 +360,16 @@ def main():
             
             if choose_model == "Decision Tree":
                 score, report, tree = decisionTree(X_train, X_test, y_train, y_test)
-                st.text("Accuracy of Decision Tree model:")
-                st.write(score, "%")
-                st.text("Classification Report:")
-                st.text(report)
+                
+                col1, col2 = st.columns(2)
+                with col1:
+                        st.metric("Model Accuracy", f"{score:.2f}%")
+                with col2:
+                        st.metric("Model Type", "Decision Tree")
+                    
+                with st.expander("Classification Report Details"):
+                        st.text("Classification Report:")
+                        st.text(report)
         
                 try:
                     if(st.checkbox("Want to predict on your own input?")):
@@ -403,10 +383,15 @@ def main():
         
             elif choose_model == "K-Nearest Neighbours":
                 score, report, clf = Knn_Classifier(X_train, X_test, y_train, y_test)
-                st.text("Accuracy of KNN model:")
-                st.write(score, "%")
-                st.text("Classification Report:")
-                st.text(report)
+                col1, col2 = st.columns(2)
+                with col1:
+                        st.metric("Model Accuracy", f"{score:.2f}%")
+                with col2:
+                        st.metric("Model Type", "K-Nearest Neighbours")
+                    
+                with st.expander("Classification Report Details"):
+                        st.text("Classification Report:")
+                        st.text(report)
         
                 try:
                     if(st.checkbox("Want to predict on your own input?")):
@@ -420,10 +405,15 @@ def main():
             
             elif choose_model == "SVM":
                 score, report, clf, scaler = svm_classifier(X_train, X_test, y_train, y_test)
-                st.text("Accuracy of SVM model:")
-                st.write(score, "%")
-                st.text("Classification Report:")
-                st.text(report)
+                col1, col2 = st.columns(2)
+                with col1:
+                        st.metric("Model Accuracy", f"{score:.2f}%")
+                with col2:
+                        st.metric("Model Type", "SVM")
+                    
+                with st.expander("Classification Report Details"):
+                        st.text("Classification Report:")
+                        st.text(report)
         
                 try:
                     if(st.checkbox("Want to predict on your own input?")):
@@ -438,11 +428,15 @@ def main():
             
             elif choose_model == "Naive Bayes":
                 score, report, clf = naive_bayes_classifier(X_train, X_test, y_train, y_test)
-                st.text("Accuracy of Naive Bayes model:")
-                st.write(score, "%")
-                st.text("Classification Report:")
-                st.text(report)
-        
+                col1, col2 = st.columns(2)
+                with col1:
+                        st.metric("Model Accuracy", f"{score:.2f}%")
+                with col2:
+                        st.metric("Model Type", "Naive Bayes")
+                    
+                with st.expander("Classification Report Details"):
+                        st.text("Classification Report:")
+                        st.text(report)
                 try:
                     if(st.checkbox("Want to predict on your own input?")):
                         st.info("It is recommended to look at the dataset before entering values")
@@ -455,10 +449,15 @@ def main():
             
             elif choose_model == "Random Forest":
                 score, report, clf = random_forest_classifier(X_train, X_test, y_train, y_test)
-                st.text("Accuracy of Random Forest model:")
-                st.write(score, "%")
-                st.text("Classification Report:")
-                st.text(report)
+                col1, col2 = st.columns(2)
+                with col1:
+                        st.metric("Model Accuracy", f"{score:.2f}%")
+                with col2:
+                        st.metric("Model Type", "Random Forest")
+                    
+                with st.expander("Classification Report Details"):
+                        st.text("Classification Report:")
+                        st.text(report)
         
                 try:
                     if(st.checkbox("Want to predict on your own input?")):
@@ -472,10 +471,15 @@ def main():
             
             elif choose_model == "Logistic Regression":
                 score, report, clf, scaler = logistic_regression_classifier(X_train, X_test, y_train, y_test)
-                st.text("Accuracy of Logistic Regression model:")
-                st.write(score, "%")
-                st.text("Classification Report:")
-                st.text(report)
+                col1, col2 = st.columns(2)
+                with col1:
+                        st.metric("Model Accuracy", f"{score:.2f}%")
+                with col2:
+                        st.metric("Model Type", "Logistic Regression")
+                    
+                with st.expander("Classification Report Details"):
+                        st.text("Classification Report:")
+                        st.text(report)
         
                 try:
                     if(st.checkbox("Want to predict on your own input?")):

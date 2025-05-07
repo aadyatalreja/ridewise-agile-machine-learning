@@ -9,10 +9,11 @@ import streamlit as st
 import os
 import sqlite3
 from streamlit.runtime.scriptrunner import get_script_run_ctx
-
+from chatbot_frontend import display_chat_sidebar, display_chat_interface, display_chat_expander, display_chat_tab
+from chatbot_backend import setup_llm_assistant, get_assistant_response
 # Configure page
 st.set_page_config(page_title="RideWise Home", layout="centered")
-
+display_chat_interface()
 # Custom CSS Styling
 st.markdown("""
     <style>
